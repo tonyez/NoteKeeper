@@ -1,0 +1,16 @@
+ <resources>
+    <!-- Reply Preference -->
+    <string-array name="pref_entries_social_network">
+        <item>Google+</item>
+        <item>Facebook</item>
+        <item>Twitter</item>
+        <item>Instagram</item>
+    </string-array>
+
+    <array name="pref_values_social_network">
+        <item>http://plus.google.com</item>
+        <item>http://facebook.com</item>
+        <item>http://twitter.com</item>
+        <item>http://instagram.com</item>
+    </array>
+</resources>
