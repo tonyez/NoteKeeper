@@ -10,17 +10,23 @@ import android.view.View;
 import android.view.Menu;
 import android.widget.TextView;
 
+import com.example.notebook.NoteBookDatabaseContract.CourseInfoEntry;
 import com.example.notebook.NoteBookDatabaseContract.NoteInfoEntry;
+import com.example.notebook.NoteBookProviderContract.Notes;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -29,13 +35,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, LoaderManager.LoaderCallbacks<Cursor> {
+    public static final int LOADER_MAIN_NOTES = 2;
     private NoteRecyclerAdapter mNoteRecyclerAdapter;
     private RecyclerView mRecyclerItems;
     private LinearLayoutManager mNotesLayoutManager;
     private CourseRecyclerAdapter mCourseRecyclerAdapter;
     private GridLayoutManager mCoursesLayoutManager;
     private NoteBookSQLiteOpenHelper mDbOpenHelper;
+    public Cursor mNoteListCursor;
 
 
     @Override
@@ -79,7 +87,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        loadNotes();
+        LoaderManager.getInstance(MainActivity.this).restartLoader(LOADER_MAIN_NOTES, null, this);
         updateNavHeader();
     }
 
@@ -201,5 +209,39 @@ public class MainActivity extends AppCompatActivity
     private void handleSelection(int message_id) {
         View view = findViewById(R.id.list_items);
         Snackbar.make(view, message_id, Snackbar.LENGTH_LONG).show();
+    }
+
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+        CursorLoader loader = null;
+        if (id == LOADER_MAIN_NOTES) {
+                    final String[] noteColumns = {
+                            Notes._ID,
+                            Notes.COLUMN_NOTE_TITLE,
+                            Notes.COLUMN_COURSE_TITLE};
+
+                    final String noteOrderBy = Notes.COLUMN_COURSE_TITLE +
+                            ", " + Notes.COLUMN_NOTE_TITLE;
+                    //note_info JOIN course_info ON note_info.course_id = course_info.course_id
+
+                    loader = new CursorLoader(this, Notes.CONTENT_EXPANDED_URI, noteColumns,
+                            null, null, noteOrderBy);
+
+        }
+        return loader;
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        if (loader.getId() == LOADER_MAIN_NOTES)
+            mNoteRecyclerAdapter.changeCursor(data);
+
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        /*if (loader.getId() == LOADER_MAIN_NOTES)
+            mNoteRecyclerAdapter.changeCursor(null);*/
     }
 }
